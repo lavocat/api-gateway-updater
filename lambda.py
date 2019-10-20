@@ -7,8 +7,7 @@ import boto3
 
 
 # TODO:
-# E-mail should contain which stages were deployed to
-# HTML mail?
+# Trigger lambda when policy is uploaded to S3
 
 
 # Read policy from file
@@ -104,7 +103,7 @@ def send_update_notice(_region, _policy, _apigw, _stages):
     except ClientError as e:
         print(e.response['Error']['Message'])
     else:
-        print(f"Email sent to {RECIPIENT}, Message ID:{response['MessageId']}"),
+        print(f"Email sent to {RECIPIENT}, ID:{response['MessageId']}"),
 
 def lambda_handler(event, context):
     region = 'us-west-2'
