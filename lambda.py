@@ -55,17 +55,26 @@ def deploy_api(_client, _apigw, _stage_list):
         )
 
 # Notifies e-mail address that API Gateway has been modified
-def send_update_notice(_region, _policy):
+def send_update_notice(_region, _policy, _apigw, _stages):
+    formatted_stages = ', '.join(_stages)
     SENDER = "API Gateway Updater <lavocat85@gmail.com>"
     RECIPIENT = "lavocat85@gmail.com"
     SUBJECT = "Resource Policy Update Notification"
-    # The email body for recipients with non-HTML email clients.
-    BODY_TEXT = f'''
-                Greetings,
-                The resource policy attached to your API Gateway
-                has been automatically updated.
-                Policy contents:
+    BODY_HTML = f'''<html>
+                <head></head>
+                <body>
+                <h3>A new resource policy has been deployed to your API Gateway</h3>
+                <p>
+                <b>API Gateway Name:</b> {_apigw} <br>
+                <b>Stages:</b> {formatted_stages} <br>
+                <b>Policy Contents:</b>
+                <br>
+                </p>
+                <pre>
                 {_policy}
+                </pre>
+                </body>
+                </html>
                 '''
     CHARSET = "UTF-8"
     _client = boto3.client('ses', _region)
@@ -80,9 +89,9 @@ def send_update_notice(_region, _policy):
             },
             Message={
                 'Body': {
-                    'Text': {
+                    'Html': {
                         'Charset': CHARSET,
-                        'Data': BODY_TEXT,
+                        'Data': BODY_HTML,
                     },
                 },
                 'Subject': {
@@ -106,12 +115,12 @@ def lambda_handler(event, context):
     # Apply update to resource policy
     update_api(policy, client, apigw)
     # Get stage names for deployment
-    stage_list = get_api_stages(client, apigw)
+    stages = get_api_stages(client, apigw)
     # Create deployment for each stage
     # NOTE:
     # The console displays deployments in a weird way, 
     # each stages' deployment history contains the complete history
     # for the API Gateway, not just deployments for that stage
-    deploy_api(client, apigw, stage_list)
+    deploy_api(client, apigw, stages)
     # Send notice that the API Gateway has been modified
-    send_update_notice(region, policy)
+    send_update_notice(region, policy, apigw, stages)
