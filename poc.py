@@ -55,6 +55,7 @@ def deploy_api(_client, _apigw, _stage_list):
         )
 
 
+# TODO: Complete, or more likely de-scope this
 # Validate current resource policy against update policy
 def validate_api_changes(_client, _apigw):
     _validate = _client.get_rest_api(

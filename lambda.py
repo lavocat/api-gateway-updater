@@ -1,16 +1,24 @@
+#!/usr/bin/python3
+
 import botocore
 from botocore.exceptions import ClientError
 
 import boto3
 
 
+# TODO:
+# E-mail should contain which stages were deployed to
+# HTML mail?
+
+
+# Read policy from file
 def read_policy():
     with open('policy.json', 'r') as f:
         _policy = f.read()
     return _policy
 
 
-# Read in policy from a file and update the rest api
+# Update the REST API
 def update_api(_policy, _client, _apigw):
     print(f'Replacing resource policy on {_apigw}')
     _client.update_rest_api(
@@ -48,7 +56,7 @@ def deploy_api(_client, _apigw, _stage_list):
 
 # Notifies e-mail address that API Gateway has been modified
 def send_update_notice(_region, _policy):
-    SENDER = "Sender Name <lavocat85@gmail.com>"
+    SENDER = "API Gateway Updater <lavocat85@gmail.com>"
     RECIPIENT = "lavocat85@gmail.com"
     SUBJECT = "Resource Policy Update Notification"
     # The email body for recipients with non-HTML email clients.
