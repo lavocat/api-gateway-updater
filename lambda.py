@@ -108,7 +108,7 @@ def send_update_notice(_region, _policy, _apigw, _stages):
 def lambda_handler(event, context):
     region = 'us-west-2'
     client = boto3.client('apigateway', region)
-    apigw = 'a5vvhhkki4'
+    apigw = 'lc3d6yoe49'
 
     policy = read_policy()
     # Apply update to resource policy
