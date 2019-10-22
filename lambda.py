@@ -2,7 +2,6 @@
 
 import botocore
 from botocore.exceptions import ClientError
-import time
 import boto3
 
 
@@ -111,12 +110,16 @@ def lambda_handler(event, context):
     # Apply update to resource policy
     update_api(policy, client, apigw)
     # Get stage names for deployment
-    
-    # Create deployment for each stage
-    # NOTE:
-    # The console displays deployments in a weird way, 
-    # each stages' deployment history contains the complete history
-    # for the API Gateway, not just deployments for that stage
-    deploy_api(client, apigw, stage)
-    # Send notice that the API Gateway has been modified
-    send_update_notice(region, policy, apigw, stage)
+    stage_list = get_api_stages(client, apigw)
+
+    if stage not in stage_list:
+        print("Stage not found.")
+    else:
+        # Create deployment for each stage
+        # NOTE:
+        # The console displays deployments in a weird way, 
+        # each stages' deployment history contains the complete history
+        # for the API Gateway, not just deployments for that stage
+        deploy_api(client, apigw, stage)
+        # Send notice that the API Gateway has been modified
+        send_update_notice(region, policy, apigw, stage)
