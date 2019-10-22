@@ -2,12 +2,8 @@
 
 import botocore
 from botocore.exceptions import ClientError
-
+import time
 import boto3
-
-
-# TODO:
-# Trigger lambda when policy is uploaded to S3
 
 
 # Read policy from file
@@ -45,13 +41,12 @@ def get_api_stages(_client, _apigw):
 
 
 # Deploy API changes to each stage
-def deploy_api(_client, _apigw, _stage_list):
-    for stage in _stage_list:
-        print(f'Creating deployment for {_apigw}:{stage}')
-        _client.create_deployment(
-            restApiId=_apigw,
-            stageName=stage,
-        )
+def deploy_api(_client, _apigw, _stage):
+    print(f'Creating deployment for {_apigw}:{_stage}')
+    _client.create_deployment(
+        restApiId=_apigw,
+        stageName=_stage,
+    )
 
 # Notifies e-mail address that API Gateway has been modified
 def send_update_notice(_region, _policy, _apigw, _stages):
@@ -103,23 +98,25 @@ def send_update_notice(_region, _policy, _apigw, _stages):
     except ClientError as e:
         print(e.response['Error']['Message'])
     else:
-        print(f"Email sent to {RECIPIENT}, ID:{response['MessageId']}"),
+        print(f"Email sent to {RECIPIENT}, ID:{response['MessageId']}")
+
 
 def lambda_handler(event, context):
     region = 'us-west-2'
     client = boto3.client('apigateway', region)
-    apigw = 'lc3d6yoe49'
+    target = event["Records"][0]["body"]
+    apigw, stage = target.split(':')
 
     policy = read_policy()
     # Apply update to resource policy
     update_api(policy, client, apigw)
     # Get stage names for deployment
-    stages = get_api_stages(client, apigw)
+    
     # Create deployment for each stage
     # NOTE:
     # The console displays deployments in a weird way, 
     # each stages' deployment history contains the complete history
     # for the API Gateway, not just deployments for that stage
-    deploy_api(client, apigw, stages)
+    deploy_api(client, apigw, stage)
     # Send notice that the API Gateway has been modified
-    send_update_notice(region, policy, apigw, stages)
+    send_update_notice(region, policy, apigw, stage)
