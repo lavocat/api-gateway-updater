@@ -1,0 +1,14 @@
+{ 
+    "lc3d6yoe49" : {
+      "dev_stage"  : "testing",
+      "prod_stage"  : "default",
+      "team"    : "TestTeam",
+      "email" : "lavocat85@gmail.com"
+    },
+    "a5vvhhkki4" : {
+        "dev_stage"  : "testing",
+        "prod_stage"  : "default",
+        "team"    : "TestTeam2",
+        "email" : "lavocat85@gmail.com"
+      }
+  }

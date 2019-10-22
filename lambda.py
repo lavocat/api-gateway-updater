@@ -2,6 +2,7 @@
 
 import botocore
 from botocore.exceptions import ClientError
+
 import boto3
 
 
@@ -113,7 +114,7 @@ def lambda_handler(event, context):
     stage_list = get_api_stages(client, apigw)
 
     if stage not in stage_list:
-        print("Stage not found.")
+        print("FATAL: Stage not found")
     else:
         # Create deployment for each stage
         # NOTE:

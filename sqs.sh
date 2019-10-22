@@ -1,0 +1,1 @@
+aws sqs send-message --queue-url https://sqs.us-west-2.amazonaws.com/938810752424/api-gateway-updater --message-body "lc3d6yoe49:default"
