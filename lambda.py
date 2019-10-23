@@ -41,8 +41,7 @@ def deploy_api(_client, _apigw, _stage):
 
 
 # Notifies e-mail address that API Gateway has been modified
-def send_update_notice(_email, _region, _policy, _apigw, _stages):
-    formatted_stages = ', '.join(_stages)
+def send_update_notice(_email, _region, _policy, _apigw, _stage):
     SENDER = "API Gateway Updater <lavocat85@gmail.com>"
     SUBJECT = "Resource Policy Update Notification"
     BODY_HTML = f'''<html>
@@ -51,7 +50,7 @@ def send_update_notice(_email, _region, _policy, _apigw, _stages):
                 <h3>A new resource policy has been deployed to your API Gateway</h3>
                 <p>
                 <b>API Gateway Name:</b> {_apigw} <br>
-                <b>Stages:</b> {formatted_stages} <br>
+                <b>Stage:</b> {_stage} <br>
                 <b>Policy Contents:</b>
                 <br>
                 </p>
