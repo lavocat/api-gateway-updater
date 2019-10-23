@@ -107,14 +107,16 @@ def validate_message(_target_api, _stage):
             break
     
     if onboarded is False:
-        sys.exit("FATAL: ApiGatewayId not in map")
-        
-    if _stage == "test":
-        return api["id"], test_stage, email
-    elif _stage == "prod":
-        return api["id"], prod_stage, email
+        print("FATAL: ApiGatewayId not in map")
+        return None
     else:
-        sys.exit('FATAL: Stage must be test or prod')
+        if _stage == "test":
+            return api["id"], test_stage, email
+        elif _stage == "prod":
+            return api["id"], prod_stage, email
+        else:
+            print('FATAL: Stage must be test or prod')
+            return None
 
 def lambda_handler(event, context):
     region = 'us-west-2'
