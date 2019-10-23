@@ -1,12 +1,10 @@
 #!/usr/bin/python3
 
 import json
-import sys
-
-import botocore
-from botocore.exceptions import ClientError
 
 import boto3
+import botocore
+from botocore.exceptions import ClientError
 
 
 # Read policy from file
@@ -96,41 +94,46 @@ def validate_message(_target_api, _stage):
     with open('map.json', 'r') as f:
         api_map = json.load(f)
 
-    onboarded = False
+    validate_dict = {
+        "api_id": None,
+        "stage": None, 
+        "email": None,
+    }
 
     for api in api_map["apigateway"]:
         if api["id"] == _target_api:
-            onboarded = True
-            test_stage = api["test_stage"]
-            prod_stage = api["prod_stage"]
-            email = api["email"]
-            break
+            validate_dict.update({"api_id": api["id"]})
+            validate_dict.update({"email": api["email"]})
+            if _stage == "prod":
+                validate_dict.update({"stage": api["prod_stage"]})
+            elif _stage == "test":
+                validate_dict.update({"stage": api["test_stage"]})
     
-    if onboarded is False:
-        print("FATAL: ApiGatewayId not in map")
-        return None
-    else:
-        if _stage == "test":
-            return api["id"], test_stage, email
-        elif _stage == "prod":
-            return api["id"], prod_stage, email
-        else:
-            print('FATAL: Stage must be test or prod')
-            return None
+    return validate_dict
+
 
 def lambda_handler(event, context):
-    region = 'us-west-2'
-    client = boto3.client('apigateway', region)
-
     # Get SQS message from Lambda event
     message = event["Records"][0]["body"]
     target_api, target_stage = message.split(':')
     # Validate message maps to an onboarded APIGateway & Stage
-    api_id, stage, email = validate_message(target_api, target_stage)
-    policy = read_policy()
-    # Apply update to resource policy
-    update_api(policy, client, api_id)
-    # Create deployment for each stage
-    deploy_api(client, api_id, stage)
-    # Send notice that the API Gateway has been modified
-    send_update_notice(email, region, policy, api_id, stage)
+    target_dict = {}
+    target_dict = validate_message(target_api, target_stage)
+
+    if None in target_dict.values():
+        print("FATAL: Target ApiGatewayId or Stage could not be validated")
+        print(f'ApiGateWayId={target_dict["api_id"]}')
+        print(f'Stage={target_dict["stage"]}')
+    else:
+        region = 'us-west-2'
+        client = boto3.client('apigateway', region)
+`       policy = read_policy()
+        api_id = target_dict["api_id"]
+        stage = target_dict["stage"]
+        email = target_dict["email"]
+        # Apply update to resource policy
+        update_api(policy, client, api_id)
+        # Create deployment for each stage
+        deploy_api(client, api_id, stage)
+        # Send notice that the API Gateway has been modified
+        send_update_notice(email, region, policy, api_id, stage)`
