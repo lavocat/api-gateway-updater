@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+import json
+import sys
+
 import botocore
 from botocore.exceptions import ClientError
 
@@ -28,18 +31,6 @@ def update_api(_policy, _client, _apigw):
     )
 
 
-# Get all currently active stages
-def get_api_stages(_client, _apigw):
-    _stage_list = []
-    _stages = _client.get_stages(
-        restApiId=_apigw
-    )
-    for stage in _stages["item"]:
-        _stage_list.append(stage["stageName"])
-
-    return _stage_list
-
-
 # Deploy API changes to each stage
 def deploy_api(_client, _apigw, _stage):
     print(f'Creating deployment for {_apigw}:{_stage}')
@@ -48,11 +39,11 @@ def deploy_api(_client, _apigw, _stage):
         stageName=_stage,
     )
 
+
 # Notifies e-mail address that API Gateway has been modified
-def send_update_notice(_region, _policy, _apigw, _stages):
+def send_update_notice(_email, _region, _policy, _apigw, _stages):
     formatted_stages = ', '.join(_stages)
     SENDER = "API Gateway Updater <lavocat85@gmail.com>"
-    RECIPIENT = "lavocat85@gmail.com"
     SUBJECT = "Resource Policy Update Notification"
     BODY_HTML = f'''<html>
                 <head></head>
@@ -78,7 +69,7 @@ def send_update_notice(_region, _policy, _apigw, _stages):
         response = _client.send_email(
             Destination={
                 'ToAddresses': [
-                    RECIPIENT,
+                    _email,
                 ],
             },
             Message={
@@ -98,29 +89,47 @@ def send_update_notice(_region, _policy, _apigw, _stages):
     except ClientError as e:
         print(e.response['Error']['Message'])
     else:
-        print(f"Email sent to {RECIPIENT}, ID:{response['MessageId']}")
+        print(f"Email sent to {_email}, ID:{response['MessageId']}")
 
+
+# Ensure that the message contains valid API Gateway ID and Stage
+def validate_message(_target_api, _stage):
+    with open('map.json', 'r') as f:
+        api_map = json.load(f)
+
+    onboarded = False
+
+    for api in api_map["apigateway"]:
+        if api["id"] == _target_api:
+            onboarded = True
+            test_stage = api["test_stage"]
+            prod_stage = api["prod_stage"]
+            email = api["email"]
+            break
+    
+    if onboarded is False:
+        sys.exit("FATAL: ApiGatewayId not in map")
+        
+    if _stage == "test":
+        return api["id"], test_stage, email
+    elif _stage == "prod":
+        return api["id"], prod_stage, email
+    else:
+        sys.exit('FATAL: Stage must be test or prod')
 
 def lambda_handler(event, context):
     region = 'us-west-2'
     client = boto3.client('apigateway', region)
-    target = event["Records"][0]["body"]
-    apigw, stage = target.split(':')
 
+    # Get SQS message from Lambda event
+    message = event["Records"][0]["body"]
+    target_api, target_stage = message.split(':')
+    # Validate message maps to an onboarded APIGateway & Stage
+    api_id, stage, email = validate_message(target_api, target_stage)
     policy = read_policy()
     # Apply update to resource policy
-    update_api(policy, client, apigw)
-    # Get stage names for deployment
-    stage_list = get_api_stages(client, apigw)
-
-    if stage not in stage_list:
-        print("FATAL: Stage not found")
-    else:
-        # Create deployment for each stage
-        # NOTE:
-        # The console displays deployments in a weird way, 
-        # each stages' deployment history contains the complete history
-        # for the API Gateway, not just deployments for that stage
-        deploy_api(client, apigw, stage)
-        # Send notice that the API Gateway has been modified
-        send_update_notice(region, policy, apigw, stage)
+    update_api(policy, client, api_id)
+    # Create deployment for each stage
+    deploy_api(client, api_id, stage)
+    # Send notice that the API Gateway has been modified
+    send_update_notice(email, region, policy, api_id, stage)

@@ -1,14 +1,17 @@
-{ 
-    "lc3d6yoe49" : {
-      "dev_stage"  : "testing",
-      "prod_stage"  : "default",
-      "team"    : "TestTeam",
-      "email" : "lavocat85@gmail.com"
-    },
-    "a5vvhhkki4" : {
-        "dev_stage"  : "testing",
-        "prod_stage"  : "default",
-        "team"    : "TestTeam2",
-        "email" : "lavocat85@gmail.com"
-      }
-  }
+{
+	"apigateway": [{
+			"id": "lc3d6yoe49",
+			"test_stage": "testing",
+			"prod_stage": "default",
+			"team": "TestTeam1",
+			"email": "lavocat85@gmail.com"
+		},
+		{
+			"id": "a5vvhhkki4",
+			"test_stage": "testing1",
+			"prod_stage": "default1",
+			"team": "TestTeam2",
+			"email": "lavocat85@gmail.com"
+		}
+	]
+}
