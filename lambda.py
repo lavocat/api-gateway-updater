@@ -7,12 +7,14 @@ import botocore
 from botocore.exceptions import ClientError
 
 
-# Read policy from file
+# Generate policy document
 def generate_policy(_account, _region):
     ip_list = get_ips_from_sg(_region)
     with open('policy.json', 'r') as f:
         _policy = f.read()
     _policy = _policy.replace('ACCOUNT_NUM', _account)
+
+    return _policy
 
 
 # Update the REST API
@@ -30,7 +32,7 @@ def update_api(_policy, _client, _apigw):
     )
 
 
-# Deploy API changes to each stage
+# Deploy API changes to target stage
 def deploy_api(_client, _apigw, _stage):
     print(f'Creating deployment for {_apigw}:{_stage}')
     _client.create_deployment(
@@ -112,6 +114,8 @@ def validate_message(_target_api, _stage):
     
     return validate_dict
 
+
+# Get a list of IPs from specified SG
 def get_ips_from_sg(_region):
     client = boto3.client('ec2', _region)
     response = client.describe_security_groups(GroupNames=['apigateway-poc'])
