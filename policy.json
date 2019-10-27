@@ -6,7 +6,7 @@
             "Principal": "*",
             "Action": "execute-api:Invoke",
             "Resource": [
-               "arn:aws:execute-api:us-west-2:938810752424:lc3d6yoe49/*"
+               "arn:aws:execute-api:us-west-2:ACCOUNT_NUM:lc3d6yoe49/*"
             ],
             "Condition" : {
                 "IpAddress": {

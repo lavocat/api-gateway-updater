@@ -8,10 +8,11 @@ from botocore.exceptions import ClientError
 
 
 # Read policy from file
-def read_policy():
+def generate_policy(_account, _region):
+    ip_list = get_ips_from_sg(_region)
     with open('policy.json', 'r') as f:
         _policy = f.read()
-    return _policy
+    _policy = _policy.replace('ACCOUNT_NUM', _account)
 
 
 # Update the REST API
@@ -111,6 +112,17 @@ def validate_message(_target_api, _stage):
     
     return validate_dict
 
+def get_ips_from_sg(_region):
+    client = boto3.client('ec2', _region)
+    response = client.describe_security_groups(GroupNames=['apigateway-poc'])
+    ips = []
+    for sg in response['SecurityGroups']:
+        for perms in sg['IpPermissions']:
+            for iprange in perms['IpRanges']:
+                ips.append(iprange['CidrIp'])
+
+    return ips
+
 
 def lambda_handler(event, context):
     # Get SQS message from Lambda event
@@ -125,9 +137,10 @@ def lambda_handler(event, context):
         print(f'ApiGateWayId={target_dict["api_id"]}')
         print(f'Stage={target_dict["stage"]}')
     else:
+        ACCOUNT_ID = context.invoked_function_arn.split(":")[4]
         region = 'us-west-2'
         client = boto3.client('apigateway', region)
-`       policy = read_policy()
+        policy = generate_policy(ACCOUNT_ID, region)
         api_id = target_dict["api_id"]
         stage = target_dict["stage"]
         email = target_dict["email"]
@@ -136,4 +149,4 @@ def lambda_handler(event, context):
         # Create deployment for each stage
         deploy_api(client, api_id, stage)
         # Send notice that the API Gateway has been modified
-        send_update_notice(email, region, policy, api_id, stage)`
+        send_update_notice(email, region, policy, api_id, stage)
